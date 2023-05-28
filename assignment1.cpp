@@ -1,8 +1,8 @@
 // assignment1.cpp : This file contains the 'main' function. Program execution begins and ends there.
 //
 
-#include <iostream>
 #include <systemc.h>
+#include <iostream>
 
 SC_MODULE(CLOCK) {
     sc_port<sc_signal_in_if<bool>> clk; // a port to access clock
@@ -13,7 +13,7 @@ SC_MODULE(CLOCK) {
     }
     void thread() {
         while (true) {
-            std::cout << sc_time_stamp() << ", value = " << clk->read() << std::endl; // print current clock value
+           // std::cout << sc_time_stamp() << ", value = " << clk->read() << std::endl; // print current clock value
             wait(); // wait for next clock value change
         }
     }
@@ -46,14 +46,11 @@ SC_MODULE(DigitalFilter) {
         float R3s = R3out.read();
         float R4s = R4out.read();
 
-
-
         //equations for each addition
         float q1 = (R1s * 0.5) + (R2s * (-0.1667)); //bottom left "+"
         float q2 = q1 + (R0s * (-0.5)); //middle left "+"
         float q3 = q2 + (xs * 0.1667); //top left "+"
         float q4 = q3 + ((R3s + R4s) * (-0.3333)); //output equation
-
         R3in.write(q4); //write output to R3
         y.write(q4); //write output
     }
@@ -63,12 +60,13 @@ SC_MODULE(DigitalFilter) {
         while (1) {
             if (res.read()) {
                 //reset is 1, reset all registers
-                R0in = 0;
-                R0out = 0;
-                R1out = 0;
-                R2out = 0;
-                R3in = 0; //equal to y
-                R3out = 0;
+                R0in.write(0);
+                R0out.write(0);
+                R1out.write(0);
+                R2out.write(0);
+                R3in.write(0); //equal to y
+                R3out.write(0);
+                R4out.write(0);
             }
             else {
                 R0out.write(R0in.read());
@@ -89,6 +87,55 @@ SC_MODULE(DigitalFilter) {
     }
 };
 
+SC_MODULE(ResultMonitor) {
+
+    sc_in<float> x; //input
+    sc_in<float> y; //output
+    sc_in<bool> clk; //clock
+
+    void monitor() {
+        while (1) {
+            std::cout << "x = " << x.read() << " | y = " << y.read() << std::endl;
+            wait();
+        }
+    }
+    SC_CTOR(ResultMonitor) {
+        SC_THREAD(monitor);
+        sensitive << clk.pos();
+    }
+};
+
+SC_MODULE(StimulusGenerator) {
+    sc_out<float> input;
+    sc_out<bool> reset;
+    sc_in_clk clk;
+
+    void generateInput() {
+        // Generate input sequence here
+        // You can use a loop, a counter, or any other method to generate the desired input values
+
+        // Example: Generate a sequence of input values from 0 to 9
+        for (int i = 0; i < 50; i++) {
+            float temp = 0;
+            if (i > 2) {
+                input.write(0);
+            }
+            wait(); // Wait for the next clock cycle
+        }
+
+        // Finish generating inputs and assert reset signal
+        input.write(0.0);
+        reset.write(true);
+        wait();
+        reset.write(false);
+    }
+
+    SC_CTOR(StimulusGenerator) {
+        SC_THREAD(generateInput);  // Use SC_THREAD instead of SC_CTHREAD
+        sensitive << clk.pos();
+    }
+};
+
 
 int sc_main(int, char* [])
 {
@@ -98,18 +145,34 @@ int sc_main(int, char* [])
 
     clock.clk(clk);
 
+    DigitalFilter filter("filter");
+
+    //Bind port 3
+    sc_signal<bool> reset_signal;
+    filter.clk(clk);
+    filter.res(reset_signal);
+
+    //Bind port 1
+    sc_signal<float> filter_output;
+    filter.y(filter_output);
+
+    //Bind port 0
+    sc_signal<float> filter_input;
+    filter.x(filter_input);
+
+    ResultMonitor result_monitor("result_monitor");
+    result_monitor.x(filter.x);
+    result_monitor.y(filter.y);
+    result_monitor.clk(clk);
+
+    filter_input = 1.0;
+
+    StimulusGenerator stimulus("stimulus");
+    stimulus.clk(clk);
+    stimulus.input(filter_input);
+    stimulus.reset(reset_signal);
+
     sc_start(500, SC_NS);
 
     return 0;
 }
-
-// Run program: Ctrl + F5 or Debug > Start Without Debugging menu
-// Debug program: F5 or Debug > Start Debugging menu
-
-// Tips for Getting Started: 
-//   1. Use the Solution Explorer window to add/manage files
-//   2. Use the Team Explorer window to connect to source control
-//   3. Use the Output window to see build output and other messages
-//   4. Use the Error List window to view errors
-//   5. Go to Project > Add New Item to create new code files, or Project > Add Existing Item to add existing code files to the project
-//   6. In the future, to open this project again, go to File > Open > Project and select the .sln file
