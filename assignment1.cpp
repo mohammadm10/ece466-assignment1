@@ -5,15 +5,15 @@
 #include <iostream>
 
 SC_MODULE(CLOCK) {
-    sc_port<sc_signal_in_if<bool>> clk; // a port to access clock
+    sc_port<sc_signal_in_if<bool>> clk;
     SC_CTOR(CLOCK) {
-        SC_THREAD(thread); // register a thread process
-        sensitive << clk; // sensitive to clock
+        SC_THREAD(thread);
+        sensitive << clk;
         dont_initialize();
     }
     void thread() {
         while (true) {
-            wait(); // wait for next clock value change
+            wait();
         }
     }
 };
@@ -49,7 +49,7 @@ SC_MODULE(DigitalFilter) {
         float q1 = (R1s * 0.5) + (R2s * (-0.1667)); //bottom left "+"
         float q2 = q1 + (R0s * (-0.5)); //middle left "+"
         float q3 = q2 + (xs * 0.1667); //top left "+"
-        float q4 = q3 + ((R3s + R4s) * (-0.3333)); //output equation
+        float q4 = q3 + ((R4s) * (-0.3333)); //output equation
         R3in.write(q4); //write output to R3
         y.write(q4); //write output y
     }
@@ -59,7 +59,7 @@ SC_MODULE(DigitalFilter) {
         while (1) {
             if (res.read()) {
                 //reset is 1, reset all registers
-                R0in.write(0);
+                //R0in.write(0);
                 R0out.write(0);
                 R1out.write(0);
                 R2out.write(0);
@@ -70,8 +70,8 @@ SC_MODULE(DigitalFilter) {
                 R0out.write(R0in.read());
                 R1out.write(R0out.read());
                 R2out.write(R1out.read());
-                R3out.write(R3in.read());
-                R4out.write(R3out.read());
+               // R3out.write(R3in.read());
+                R4out.write(R3in.read());
             }
             wait();
         }
@@ -81,10 +81,12 @@ SC_MODULE(DigitalFilter) {
     SC_CTOR(DigitalFilter) { //Constructor
         SC_CTHREAD(register_updates, clk.pos()); //Trigger on positive clock value
         SC_METHOD(produce);
-        sensitive << x << R0out << R1out << R2out << R3out << R4out;
+        sensitive << x << R0out << R1out << R2out << R4out;
     }
 };
 
+
+//Module for the program monitor
 SC_MODULE(ResultMonitor) {
 
     sc_in<float> x; //input
@@ -103,6 +105,7 @@ SC_MODULE(ResultMonitor) {
     }
 };
 
+//Module to generate test data
 SC_MODULE(StimulusGenerator) {
     sc_out<float> input;
     sc_out<bool> reset;
@@ -126,7 +129,7 @@ SC_MODULE(StimulusGenerator) {
 
     SC_CTOR(StimulusGenerator) {
         SC_THREAD(generateInput);
-        sensitive << clk.pos();
+        sensitive << clk.pos(); //trigger only on positive clock
     }
 };
 
