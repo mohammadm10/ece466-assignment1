@@ -13,7 +13,6 @@ SC_MODULE(CLOCK) {
     }
     void thread() {
         while (true) {
-           // std::cout << sc_time_stamp() << ", value = " << clk->read() << std::endl; // print current clock value
             wait(); // wait for next clock value change
         }
     }
@@ -52,7 +51,7 @@ SC_MODULE(DigitalFilter) {
         float q3 = q2 + (xs * 0.1667); //top left "+"
         float q4 = q3 + ((R3s + R4s) * (-0.3333)); //output equation
         R3in.write(q4); //write output to R3
-        y.write(q4); //write output
+        y.write(q4); //write output y
     }
 
     void register_updates() {
@@ -64,7 +63,6 @@ SC_MODULE(DigitalFilter) {
                 R0out.write(0);
                 R1out.write(0);
                 R2out.write(0);
-                R3in.write(0); //equal to y
                 R3out.write(0);
                 R4out.write(0);
             }
@@ -111,27 +109,23 @@ SC_MODULE(StimulusGenerator) {
     sc_in_clk clk;
 
     void generateInput() {
-        // Generate input sequence here
-        // You can use a loop, a counter, or any other method to generate the desired input values
-
-        // Example: Generate a sequence of input values from 0 to 9
-        for (int i = 0; i < 50; i++) {
-            float temp = 0;
-            if (i > 2) {
-                input.write(0);
-            }
-            wait(); // Wait for the next clock cycle
-        }
-
-        // Finish generating inputs and assert reset signal
-        input.write(0.0);
+        wait();
         reset.write(true);
         wait();
         reset.write(false);
+        for (int i = 0; i < 50; i++) {
+            if (i > 0) {
+                input.write(0);
+            }
+            else {
+                input.write(1);
+            }
+            wait(); //wait for the next clock cycle
+        }
     }
 
     SC_CTOR(StimulusGenerator) {
-        SC_THREAD(generateInput);  // Use SC_THREAD instead of SC_CTHREAD
+        SC_THREAD(generateInput);
         sensitive << clk.pos();
     }
 };
@@ -141,38 +135,42 @@ int sc_main(int, char* [])
 {
     sc_clock clk("clk", 10, SC_NS, 0.5, 0, SC_NS, false);
 
-    CLOCK clock("clock");
+    sc_trace_file* trace_file = sc_create_vcd_trace_file("C:/466-a1/assignment1");
+    trace_file->set_time_unit(1, SC_NS);
 
+    sc_signal<bool> reset_signal;
+    sc_signal<float> filter_input;
+    sc_signal<float> filter_output;
+
+    sc_trace(trace_file, clk, "clock");
+    sc_trace(trace_file, reset_signal, "reset");
+    sc_trace(trace_file, filter_input, "x");
+    sc_trace(trace_file, filter_output, "y");
+
+    CLOCK clock("clock");
     clock.clk(clk);
 
     DigitalFilter filter("filter");
-
-    //Bind port 3
-    sc_signal<bool> reset_signal;
     filter.clk(clk);
     filter.res(reset_signal);
-
-    //Bind port 1
-    sc_signal<float> filter_output;
     filter.y(filter_output);
-
-    //Bind port 0
-    sc_signal<float> filter_input;
     filter.x(filter_input);
 
     ResultMonitor result_monitor("result_monitor");
+    result_monitor.clk(clk);
     result_monitor.x(filter.x);
     result_monitor.y(filter.y);
-    result_monitor.clk(clk);
-
-    filter_input = 1.0;
 
     StimulusGenerator stimulus("stimulus");
     stimulus.clk(clk);
     stimulus.input(filter_input);
     stimulus.reset(reset_signal);
 
-    sc_start(500, SC_NS);
+    sc_start(120, SC_NS);  //Run for 12 clock cycles
+
+    sc_close_vcd_trace_file(trace_file);
 
     return 0;
 }
+
+
