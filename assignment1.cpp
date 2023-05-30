@@ -59,7 +59,7 @@ SC_MODULE(DigitalFilter) {
         while (1) {
             if (res.read()) {
                 //reset is 1, reset all registers
-                //R0in.write(0);
+                R0in.write(0);
                 R0out.write(0);
                 R1out.write(0);
                 R2out.write(0);
@@ -67,11 +67,11 @@ SC_MODULE(DigitalFilter) {
                 R4out.write(0);
             }
             else {
-                R0out.write(R0in.read());
+                R0out.write(x.read());
                 R1out.write(R0out.read());
                 R2out.write(R1out.read());
-               // R3out.write(R3in.read());
-                R4out.write(R3in.read());
+                R3out.write(y.read());
+                R4out.write(R3out.read());
             }
             wait();
         }
@@ -138,7 +138,7 @@ int sc_main(int, char* [])
 {
     sc_clock clk("clk", 10, SC_NS, 0.5, 0, SC_NS, false);
 
-    sc_trace_file* trace_file = sc_create_vcd_trace_file("C:/466-a1/assignment1");
+    sc_trace_file* trace_file = sc_create_vcd_trace_file("assignment1 - part 1");
     trace_file->set_time_unit(1, SC_NS);
 
     sc_signal<bool> reset_signal;
@@ -175,5 +175,4 @@ int sc_main(int, char* [])
 
     return 0;
 }
-
 

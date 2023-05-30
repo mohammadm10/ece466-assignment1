@@ -1,0 +1,116 @@
+$date
+     May 29, 2023       22:03:36
+$end
+
+$version
+ SystemC 2.3.4-Accellera --- May 25 2023 20:59:51
+$end
+
+$timescale
+     1 ns
+$end
+
+$scope module SystemC $end
+$var wire    1  aaaaa  clock       $end
+$var wire    1  aaaab  reset       $end
+$var real    1  aaaac  x       $end
+$var real    1  aaaad  y       $end
+$upscope $end
+$enddefinitions  $end
+
+$comment
+All initial values are dumped below at time 0 sec = 0 timescale units.
+$end
+
+$dumpvars
+0aaaaa
+0aaaab
+r0 aaaac
+r0 aaaad
+$end
+
+#5
+1aaaaa
+1aaaab
+
+#10
+0aaaaa
+
+#15
+1aaaaa
+0aaaab
+r1 aaaac
+r0.166700005531311 aaaad
+
+#20
+0aaaaa
+
+#25
+1aaaaa
+r0 aaaac
+r-0.5 aaaad
+
+#30
+0aaaaa
+
+#35
+1aaaaa
+r0.4444388747215271 aaaad
+
+#40
+0aaaaa
+
+#45
+1aaaaa
+r-5.000553210265934e-05 aaaad
+
+#50
+0aaaaa
+
+#55
+1aaaaa
+r-0.148131474852562 aaaad
+
+#60
+0aaaaa
+
+#65
+1aaaaa
+r1.66668432939332e-05 aaaad
+
+#70
+0aaaaa
+
+#75
+1aaaaa
+r0.04937222227454185 aaaad
+
+#80
+0aaaaa
+
+#85
+1aaaaa
+r-5.555059033213183e-06 aaaad
+
+#90
+0aaaaa
+
+#95
+1aaaaa
+r-0.0164557620882988 aaaad
+
+#100
+0aaaaa
+
+#105
+1aaaaa
+r1.851501224336971e-06 aaaad
+
+#110
+0aaaaa
+
+#115
+1aaaaa
+r0.005484705325216055 aaaad
+
+#120
