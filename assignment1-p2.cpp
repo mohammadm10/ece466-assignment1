@@ -228,7 +228,7 @@ int sc_main(int, char* [])
 {
 	sc_clock clk("clk", 10, SC_NS, 0.5, 0, SC_NS, false);
 
-	sc_trace_file* trace_file = sc_create_vcd_trace_file("C:/466-a1/assignment1");
+	sc_trace_file* trace_file = sc_create_vcd_trace_file("assignment1 - part 2");
 	trace_file->set_time_unit(1, SC_NS);
 
 	sc_signal<bool> reset_signal;
