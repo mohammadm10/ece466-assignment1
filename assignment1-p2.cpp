@@ -37,15 +37,16 @@ SC_MODULE(FloatAdder) {
 	}
 };
 
+//Clocked register
 SC_MODULE(ClkReg) {
 	sc_in<float> input;
 	sc_out<float> output;
 	sc_in<bool> res;
-	sc_in_clk clk;
+	sc_in<bool> clk;
 	float update_register_data = 0;
 
 	void update_register() {
-		if (res.read()) {
+		if (res) {
 			update_register_data = 0;
 		}
 		if (clk.posedge()) {
@@ -207,7 +208,7 @@ SC_MODULE(StimulusGenerator) {
 		reset.write(true);
 		wait();
 		reset.write(false);
-		for (int i = 0; i < 50; i++) {
+		for (int i = 0; i < 100; i++) {
 			if (i > 0) {
 				input.write(0);
 			}
@@ -228,9 +229,10 @@ int sc_main(int, char* [])
 {
 	sc_clock clk("clk", 10, SC_NS, 0.5, 0, SC_NS, false);
 
-	sc_trace_file* trace_file = sc_create_vcd_trace_file("assignment1 - part 2");
+	sc_trace_file* trace_file = sc_create_vcd_trace_file("assignment1_part 2_trace"); //Create trace file
 	trace_file->set_time_unit(1, SC_NS);
 
+	//Trace file contents
 	sc_signal<bool> reset_signal;
 	sc_signal<float> filter_input;
 	sc_signal<float> filter_output;
@@ -240,23 +242,26 @@ int sc_main(int, char* [])
 	sc_trace(trace_file, filter_input, "x");
 	sc_trace(trace_file, filter_output, "y");
 
+	//Digital filter initialization
 	DigitalFilter filter("filter");
 	filter.clk(clk);
 	filter.res(reset_signal);
 	filter.y(filter_output);
 	filter.x(filter_input);
 
+	//Result monitor initialization
 	ResultMonitor result_monitor("result_monitor");
 	result_monitor.clk(clk);
 	result_monitor.x(filter.x);
 	result_monitor.y(filter.y);
 
+	//Stimulus generator initialization
 	StimulusGenerator stimulus("stimulus");
 	stimulus.clk(clk);
 	stimulus.input(filter_input);
 	stimulus.reset(reset_signal);
 
-	sc_start(120, SC_NS);  //Run for 12 clock cycles
+	sc_start(130, SC_NS);  //Run for 12 clock cycles
 
 	sc_close_vcd_trace_file(trace_file);
 
