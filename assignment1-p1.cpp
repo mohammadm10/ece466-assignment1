@@ -5,17 +5,19 @@
 #include <iostream>
 
 SC_MODULE(CLOCK) {
-    sc_port<sc_signal_in_if<bool>> clk;
-    SC_CTOR(CLOCK) {
-        SC_THREAD(thread);
-        sensitive << clk;
-        dont_initialize();
-    }
+    sc_in<bool> clk;
+
     void thread() {
         while (true) {
             wait();
         }
     }
+
+    SC_CTOR(CLOCK) {
+        SC_THREAD(thread);
+        sensitive << clk;
+    }
+
 };
 
 //SC_MODULE to hold SC_METHOD & SC_CTHREAD
@@ -116,7 +118,7 @@ SC_MODULE(StimulusGenerator) {
         reset.write(true);
         wait();
         reset.write(false);
-        for (int i = 0; i < 50; i++) {
+        for (int i = 0; i < 100; i++) {
             if (i > 0) {
                 input.write(0);
             }
@@ -136,15 +138,16 @@ SC_MODULE(StimulusGenerator) {
 
 int sc_main(int, char* [])
 {
-    sc_clock clk("clk", 10, SC_NS, 0.5, 0, SC_NS, false);
+    sc_clock clk("clk", 10, SC_NS, 0.5, 0, SC_NS, false); //Clock with period of 10
 
-    sc_trace_file* trace_file = sc_create_vcd_trace_file("assignment1 - part 1");
+    sc_trace_file* trace_file = sc_create_vcd_trace_file("assignment1_part 1_trace"); //Create trace file
     trace_file->set_time_unit(1, SC_NS);
 
     sc_signal<bool> reset_signal;
     sc_signal<float> filter_input;
     sc_signal<float> filter_output;
 
+    //Set trace fields
     sc_trace(trace_file, clk, "clock");
     sc_trace(trace_file, reset_signal, "reset");
     sc_trace(trace_file, filter_input, "x");
@@ -153,26 +156,28 @@ int sc_main(int, char* [])
     CLOCK clock("clock");
     clock.clk(clk);
 
+    //Initialize digital filter
     DigitalFilter filter("filter");
     filter.clk(clk);
     filter.res(reset_signal);
     filter.y(filter_output);
     filter.x(filter_input);
 
+    //Initialize result monitor
     ResultMonitor result_monitor("result_monitor");
     result_monitor.clk(clk);
     result_monitor.x(filter.x);
     result_monitor.y(filter.y);
 
+    //Initialize stim generator
     StimulusGenerator stimulus("stimulus");
     stimulus.clk(clk);
     stimulus.input(filter_input);
     stimulus.reset(reset_signal);
 
-    sc_start(120, SC_NS);  //Run for 12 clock cycles
+    sc_start(130, SC_NS);  //Run for 12 clock cycles
 
     sc_close_vcd_trace_file(trace_file);
 
     return 0;
 }
-
